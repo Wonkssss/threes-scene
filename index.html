@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js portfolio</title>
+
+    <link rel="stylesheet" type="text/css" href="src/styles/style.css">
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/"
+            }
+        }
+    </script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r17/Stats.min.js"></script> -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <!-- for FPS stats -->
+    <div id="Stats-output"></div>
+    <!-- for webGL renderer output -->
+    <div id="WebGL-output"></div>
+
+    <canvas id="myCanvas"></canvas>
+    <script type="module" src="src/Main.js"></script> 
+</body>
+</html>

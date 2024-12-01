@@ -1,0 +1,164 @@
+MODEL
+
+import * as THREE from 'three';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+// could have been called loaders.js
+
+// Function to load an FBX model
+export function loadFBXModel(url, scene, scale = 0.01, position = { x: 0, y: 0, z: 0 }, mixers) {
+    const fbxLoader = new FBXLoader();
+    let mixer;
+    let actions = [];
+
+    fbxLoader.load(url, (object) => {
+        object.scale.set(scale, scale, scale);
+        object.position.set(position.x, position.y, position.z);
+        scene.add(object);
+
+        // Play animations if they exist
+        if (object.animations && object.animations.length > 0) {
+            mixer = new THREE.AnimationMixer(object);
+            const action = mixer.clipAction(object.animations[0]);
+            action.play();
+        }
+        mixers.push(mixer);
+    }, undefined, (error) => {
+        console.error('Error loading FBX model:', error);
+    });
+
+    return mixer;
+}
+
+
+----
+
+import * as THREE from 'three';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+export function loadFBXModel(url, scene, scale = 0.01, position = { x: 0, y: 0, z: 0 }) {
+    const fbxLoader = new FBXLoader();
+
+    return new Promise((resolve, reject) => {
+        fbxLoader.load(
+            url,
+            (object) => {
+                object.scale.set(scale, scale, scale);
+                object.position.set(position.x, position.y, position.z);
+                scene.add(object);
+
+                // Initialize the mixer and actions array
+                const mixer = new THREE.AnimationMixer(object);
+                const actions = [];
+
+                // Play animations if they exist
+                if (object.animations && object.animations.length > 0) {
+                    object.animations.forEach((clip) => {
+                        const action = mixer.clipAction(clip);
+                        actions.push(action);
+                        action.play(); // Automatically play each action
+                    });
+                }
+
+                // Resolve with the model, mixer, and actions
+                resolve({ object, mixer, actions });
+            },
+            undefined,
+            (error) => {
+                console.error('Error loading FBX model:', error);
+                reject(error);
+            }
+        );
+    });
+}
+
+
+ANIMATION -----------------------------------------------------------
+
+import * as THREE from 'three';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+export function createAnimation(scene, camera, renderer, mixers, controls) {
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+        requestAnimationFrame(animate);
+
+        // Update animation mixers for FBX models
+        mixers.forEach(mixer => {
+            if (mixer) {
+                mixer.update(clock.getDelta());
+            }
+        });
+
+        // Update controls to allow interaction (camera movement)
+        controls.update(); 
+        // Render the scene
+        renderer.render(scene, camera);
+    };
+
+    animate();
+}
+
+MAIN -----------------------------------------------------------
+
+import * as THREE from 'three';
+import { createCamera } from './components/camera.js';
+import { createRenderer } from './components/renderer.js';
+import { createScene } from './components/scene.js';
+import { createLights } from './components/lights.js';
+import { createControls } from './components/controls.js';
+import { createGUI } from './components/gui.js';
+import { createAnimation } from './components/animation.js';
+import { loadFBXModel } from './components/model.js';  
+
+const canvas = document.getElementById('myCanvas');
+const camera = createCamera();
+const renderer = createRenderer(canvas);
+const scene = createScene();
+createLights(scene);
+const controls = createControls(camera, renderer);
+
+
+// Create 3D objects 
+const sphereGeo = new THREE.SphereGeometry(1, 32, 32);
+const sphereMat = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
+
+const squareGeo = new THREE.BoxGeometry(1, 1, 1);
+const squareMat = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+const squareMesh = new THREE.Mesh(squareGeo, squareMat);
+
+const triangleGeo = new THREE.ConeGeometry(1, 2, 3);
+const triangleMat = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+const triangleMesh = new THREE.Mesh(triangleGeo, triangleMat);
+
+createGUI(scene, sphereMesh, squareMesh, triangleMesh);
+
+const mixers = [];
+loadFBXModel('src/assets/models/Roundhouse Kick-4.fbx', scene, 0.01, { x: 0, y: -1, z: 0 }, mixers);
+loadFBXModel('src/assets/models/waving.fbx', scene, 0.01, { x: 2, y: -1, z: 0 }, mixers); 
+
+
+createAnimation(scene, camera, renderer, mixers, controls);  // Pass mixers for animation updates
+
+------
+
+
+// Load multiple FBX models
+// Promise.all([
+//     loadFBXModel('src/assets/models/Roundhouse Kick-4.fbx', scene, 0.01, { x: 0, y: -1, z: 0 }),
+//     loadFBXModel('src/assets/models/waving.fbx', scene, 0.01, { x: 2, y: -1, z: 0 })
+// ])
+//     .then((models) => {
+//         // Extract mixers from loaded models
+//         models.forEach((model) => {
+//             if (model.mixer) mixers.push(model.mixer);
+//         });
+
+//         // Start the animation loop
+//         createAnimation(scene, camera, renderer, mixers, controls);
+//     })
+//     .catch((error) => {
+//         console.error('Error loading models:', error);
+//     });
